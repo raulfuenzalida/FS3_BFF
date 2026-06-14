@@ -2,9 +2,12 @@ package duoc.fs3.bff.controller;
 
 import duoc.fs3.bff.service.ProxyService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -38,10 +41,15 @@ public class SyncProxyController {
      */
     @PostMapping("/upload-image")
     public ResponseEntity<String> uploadImage(@RequestParam("image") MultipartFile file, @RequestHeader HttpHeaders headers) {
-        // Para manejar multipart, necesitamos un enfoque diferente
-        // Por simplicidad, pasamos el archivo como byte array
         try {
-            return proxyService.proxyToSync("/api/v1/sync/upload-image", HttpMethod.POST, headers, file.getBytes(), null);
+            MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+            body.add("image", new ByteArrayResource(file.getBytes()) {
+                @Override
+                public String getFilename() {
+                    return file.getOriginalFilename();
+                }
+            });
+            return proxyService.proxyToSyncMultipart("/api/v1/sync/upload-image", HttpMethod.POST, headers, body);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("{\"error\": \"Error processing file\"}");
         }

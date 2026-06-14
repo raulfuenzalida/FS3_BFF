@@ -2,11 +2,11 @@ package duoc.fs3.bff.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Map;
@@ -93,6 +93,22 @@ public class ProxyService {
     }
 
     /**
+     * Redirige una petición multipart al microservicio de sincronización.
+     * 
+     * @param path Ruta del endpoint (ej: /api/v1/sync/upload-image)
+     * @param method Método HTTP
+     * @param headers Headers de la petición original
+     * @param body Cuerpo multipart de la petición
+     * @return Respuesta del microservicio
+     */
+    public ResponseEntity<String> proxyToSyncMultipart(String path, HttpMethod method, 
+                                                       HttpHeaders headers, MultiValueMap<String, Object> body) {
+        String url = syncUrl + path;
+        log.info("Proxying multipart to Sync: {} {}", method, url);
+        return proxyMultipartRequest(url, method, headers, body);
+    }
+
+    /**
      * Método genérico para hacer proxy de peticiones HTTP.
      * 
      * @param url URL completa del destino
@@ -114,6 +130,39 @@ public class ProxyService {
         } catch (Exception e) {
             log.error("Error proxying request to {}: {}", url, e.getMessage());
             throw new RuntimeException("Error proxying request: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Método para hacer proxy de peticiones multipart HTTP.
+     * 
+     * @param url URL completa del destino
+     * @param method Método HTTP
+     * @param headers Headers a preservar
+     * @param body Cuerpo multipart de la petición
+     * @return Respuesta del microservicio
+     */
+    private ResponseEntity<String> proxyMultipartRequest(String url, HttpMethod method, 
+                                                         HttpHeaders headers, MultiValueMap<String, Object> body) {
+        try {
+            // Configurar headers para multipart
+            HttpHeaders multipartHeaders = new HttpHeaders();
+            multipartHeaders.setContentType(MediaType.MULTIPART_FORM_DATA);
+            
+            // Preservar headers importantes (como Authorization)
+            if (headers.getAuthorization() != null) {
+                multipartHeaders.setAuthorization(headers.getAuthorization());
+            }
+            
+            HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<>(body, multipartHeaders);
+            ResponseEntity<String> response = restTemplate.exchange(url, method, entity, String.class);
+            log.info("Proxy multipart response status: {}", response.getStatusCode());
+            return ResponseEntity.status(response.getStatusCode())
+                    .headers(response.getHeaders())
+                    .body(response.getBody());
+        } catch (Exception e) {
+            log.error("Error proxying multipart request to {}: {}", url, e.getMessage());
+            throw new RuntimeException("Error proxying multipart request: " + e.getMessage(), e);
         }
     }
 }
