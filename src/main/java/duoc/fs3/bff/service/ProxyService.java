@@ -150,8 +150,9 @@ public class ProxyService {
             multipartHeaders.setContentType(MediaType.MULTIPART_FORM_DATA);
             
             // Preservar headers importantes (como Authorization)
-            if (headers.getAuthorization() != null) {
-                multipartHeaders.setAuthorization(headers.getAuthorization());
+            String authHeader = headers.getFirst("Authorization");
+            if (authHeader != null) {
+                multipartHeaders.set("Authorization", authHeader);
             }
             
             HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<>(body, multipartHeaders);
