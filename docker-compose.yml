@@ -1,0 +1,11 @@
+services:
+  bff:
+    build: .
+    container_name: fs3-bff
+    ports:
+      - "8085:8085"
+    environment:
+      - MS_AUTH_URL=${MS_AUTH_URL}
+      - MS_WEATHER_URL=${MS_WEATHER_URL}
+      - MS_SYNC_URL=${MS_SYNC_URL}
+    restart: always
