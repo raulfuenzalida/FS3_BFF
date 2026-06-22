@@ -3,7 +3,7 @@ name: Publicar imagen docker
 on:
   push:
     branches:
-      - release
+      - develop
 
 jobs:
   build-and-push:
