@@ -36,7 +36,8 @@ public class WebConfig {
             "http://localhost:19000",     // Expo (Android/iOS simulator)
             "http://localhost:19006",     // Expo Web
             "http://localhost:3000",      // Desarrollo web
-            "http://localhost:4200"       // Angular (si aplica)
+            "http://localhost:4200",       // Angular (si aplica)
+            "http://paneladmin-828096400783-us-east-1-an.s3-website-us-east-1.amazonaws.com"  // PanelAdmin en S3
         ));
         
         // Métodos HTTP permitidos
